@@ -1,5 +1,7 @@
 package com.example.contenedores;
 
+import static java.lang.invoke.VarHandle.AccessMode.GET;
+
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
@@ -10,10 +12,21 @@ import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
+import WebServices.Asynchtask;
+import WebServices.WebService;
+
 public class MainActivity extends AppCompatActivity
     //al implementar  (implements AdapterView.OnItemSelectedListener)
     //se nos abren dos opciones en la parte inferior
-        implements AdapterView.OnItemSelectedListener{
+        implements AdapterView.OnItemSelectedListener, Asynchtask {
 
 
 
@@ -37,26 +50,14 @@ public class MainActivity extends AppCompatActivity
         //esto es para que aparezca la seleccionanda
         cmbOpciones.setOnItemSelectedListener(this);
         //Listview
-        //paso 1 Data
-        final String[] datos2 =
-                new
-                        String[]{"EXPLOMUNDO",
-                        "MULTICARIBE",
-                        "XPLORA",
-                        "CAFE Y TINTO",
-                        "FANCY MINT COFFEE",
-                        "SWEET LAND",
-                        "TORO CAFE"
-        };
-        //paso 2 Adaptador
-        ArrayAdapter<String> adaptador2 =
-                new ArrayAdapter<String>(this,
-                        android.R.layout.simple_spinner_item, datos2);
-        //paso 3
-        // SE USA PARTE DE CODIGO DE SPINNER Y DE LA PAGINA LISTVIEW
-        ListView lstOpciones =
-                (ListView)findViewById(R.id.listlugares);
-         lstOpciones.setAdapter(adaptador2);
+
+        Map<String, String> datos2 = new HashMap<String, String>();
+        WebService ws= new WebService(
+                "https://uealecpeterson.net/turismo/lugar_turistico/json_getlistadoGrid",
+                datos2, MainActivity.this, MainActivity.this);
+        ws.execute("GET");
+
+
 
     }
 
@@ -74,4 +75,39 @@ public class MainActivity extends AppCompatActivity
 
 
     }
+
+    @Override
+    public void processFinish(String result) throws JSONException {
+        //paso 1 Data
+        ArrayList<LugarTuristico> ListaLugaresTuristico = new
+                ArrayList<LugarTuristico> ();
+
+        JSONObject lista= new JSONObject(result);
+        JSONArray JSONlista = lista.getJSONArray("data");
+
+       ListaLugaresTuristico = LugarTuristico.JsonObjectsBuild(JSONlista);
+        AdaptadorLugaresTuristico adapatorLugares =
+                new AdaptadorLugaresTuristico(this, ListaLugaresTuristico);
+        ListView lstOpciones = (ListView)findViewById(R.id.listlugares);
+        lstOpciones.setAdapter(adapatorLugares);
+
+
+       /* JSONObject lista= new JSONObject(result);
+        JSONArray JSONlista = lista.getJSONArray("data");
+        for(int i=0; i< JSONlista.length();i++) {
+            JSONObject lugar =
+                    JSONlista.getJSONObject(i);
+            lstLugares.add(lugar.getString("nombre_lugar").toString());
+        }
+        //paso 2 Adaptador
+        ArrayAdapter<String> adaptador2 =
+                new ArrayAdapter<String>(this,
+                        android.R.layout.simple_spinner_item, lstLugares);*/
+        //paso 3
+        // SE USA PARTE DE CODIGO DE SPINNER Y DE LA PAGINA LISTVIEW
+
+
+    }
+
+
 }
